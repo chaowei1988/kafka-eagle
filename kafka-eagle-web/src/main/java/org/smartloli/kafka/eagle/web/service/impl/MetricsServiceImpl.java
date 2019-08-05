@@ -17,13 +17,17 @@
  */
 package org.smartloli.kafka.eagle.web.service.impl;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
-import com.google.gson.Gson;
+import java.text.ParseException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+
+import org.smartloli.kafka.eagle.common.protocol.BrokersInfo;
 import org.smartloli.kafka.eagle.common.protocol.KpiInfo;
 import org.smartloli.kafka.eagle.common.protocol.MBeanInfo;
-import org.smartloli.kafka.eagle.common.protocol.topic.TopicLagInfo;
+import org.smartloli.kafka.eagle.common.protocol.topic.TopicOffsetsInfo;
+import org.smartloli.kafka.eagle.common.util.CalendarUtils;
 import org.smartloli.kafka.eagle.common.util.KConstants.MBean;
 import org.smartloli.kafka.eagle.common.util.KConstants.ZK;
 import org.smartloli.kafka.eagle.common.util.StrUtils;
@@ -36,11 +40,9 @@ import org.smartloli.kafka.eagle.web.service.MetricsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.text.ParseException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
+import com.google.gson.Gson;
 
 /**
  * Achieve access to the kafka monitoring data interface through jmx.
@@ -63,11 +65,10 @@ public class MetricsServiceImpl implements MetricsService {
 
 	/** Gets summary monitoring data for all broker. */
 	public String getAllBrokersMBean(String clusterAlias) {
-		JSONArray brokers = JSON.parseArray(kafkaService.getAllBrokersInfo(clusterAlias));
+		List<BrokersInfo> brokers = kafkaService.getAllBrokersInfo(clusterAlias);
 		Map<String, MBeanInfo> mbeans = new HashMap<>();
-		for (Object object : brokers) {
-			JSONObject broker = (JSONObject) object;
-			String uri = broker.getString("host") + ":" + broker.getInteger("jmxPort");
+		for (BrokersInfo broker : brokers) {
+			String uri = broker.getHost() + ":" + broker.getJmxPort();
 			MBeanInfo bytesIn = mx4jService.bytesInPerSec(uri);
 			MBeanInfo bytesOut = mx4jService.bytesOutPerSec(uri);
 			MBeanInfo bytesRejected = mx4jService.bytesRejectedPerSec(uri);
@@ -161,15 +162,13 @@ public class MetricsServiceImpl implements MetricsService {
 		JSONArray replicationBytesOuts = new JSONArray();
 		JSONArray replicationBytesIns = new JSONArray();
 
+		JSONArray osFreeMems = new JSONArray();
+
 		JSONArray zkSendPackets = new JSONArray();
 		JSONArray zkReceivedPackets = new JSONArray();
 		JSONArray zkNumAliveConnections = new JSONArray();
 		JSONArray zkOutstandingRequests = new JSONArray();
-		String zks = "";
 		for (KpiInfo kpi : kpis) {
-			if ("".equals(zks) || zks == null) {
-				zks = kpi.getBroker();
-			}
 			switch (kpi.getKey()) {
 			case ZK.ZK_SEND_PACKETS:
 				assembly(zkSendPackets, kpi);
@@ -216,6 +215,9 @@ public class MetricsServiceImpl implements MetricsService {
 			case MBean.REPLICATIONBYTESOUTPERSEC:
 				assembly(replicationBytesIns, kpi);
 				break;
+			case MBean.OSFREEMEMORY:
+				assembly(osFreeMems, kpi);
+				break;
 			default:
 				break;
 			}
@@ -225,9 +227,9 @@ public class MetricsServiceImpl implements MetricsService {
 		target.put("received", zkReceivedPackets);
 		target.put("queue", zkOutstandingRequests);
 		target.put("alive", zkNumAliveConnections);
-		target.put("msg", messageIns);
-		target.put("ins", byteIns);
-		target.put("outs", byteOuts);
+		target.put("messageIns", messageIns);
+		target.put("byteIns", byteIns);
+		target.put("byteOuts", byteOuts);
 		target.put("byteRejected", byteRejected);
 		target.put("failedFetchRequest", failedFetchRequest);
 		target.put("failedProduceRequest", failedProduceRequest);
@@ -236,15 +238,15 @@ public class MetricsServiceImpl implements MetricsService {
 		target.put("totalProduceRequests", totalProduceRequests);
 		target.put("replicationBytesIns", replicationBytesIns);
 		target.put("replicationBytesOuts", replicationBytesOuts);
-
-		target.put("zks", zks.split(","));
+		target.put("osFreeMems", osFreeMems);
 
 		return target.toJSONString();
 	}
 
 	private void assembly(JSONArray assemblys, KpiInfo kpi) throws ParseException {
 		JSONObject object = new JSONObject();
-		object.put(kpi.getKey(), kpi.getValue());
+		object.put("x", CalendarUtils.convertUnixTime(kpi.getTimespan(), "yyyy-MM-dd HH:mm"));
+		object.put("y", kpi.getValue());
 		assemblys.add(object);
 	}
 
@@ -254,18 +256,13 @@ public class MetricsServiceImpl implements MetricsService {
 	}
 
 	@Override
-	public int setConsumerLag(List<TopicLagInfo> topicLag) {
-		return mbeanDao.setConsumerLag(topicLag);
+	public int setConsumerTopic(List<TopicOffsetsInfo> topicOffsets) {
+		return mbeanDao.setConsumerTopic(topicOffsets);
 	}
 
 	@Override
-	public List<TopicLagInfo> getConsumerLag(Map<String, Object> params) {
-		return mbeanDao.getConsumerLag(params);
-	}
-
-	@Override
-	public void cleanLagData(int tm) {
-		mbeanDao.cleanLagData(tm);
+	public void cleanConsumerTopic(int tm) {
+		mbeanDao.cleanConsumerTopic(tm);
 	}
 
 }

@@ -16,8 +16,6 @@ $(document).ready(function() {
 		}, {
 			"mData" : 'partitionNumbers'
 		}, {
-			"mData" : 'topicSize'
-		}, {
 			"mData" : 'created'
 		}, {
 			"mData" : 'modify'

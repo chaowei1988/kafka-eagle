@@ -19,6 +19,8 @@ package org.smartloli.kafka.eagle.core.metrics;
 
 import org.apache.kafka.clients.admin.ConfigEntry;
 
+import com.alibaba.fastjson.JSONObject;
+
 /**
  * KafkaMetricsService to collect kafka performance kpi.
  * 
@@ -28,10 +30,13 @@ import org.apache.kafka.clients.admin.ConfigEntry;
  */
 public interface KafkaMetricsService {
 
-	/** Get topic size by jmx. */
-	public String topicSize(String clusterAlias, String topic);
+	/** Get topic size by jmx and convert unit, such TB, GB ,MB etc. */
+	public JSONObject topicSize(String clusterAlias, String topic);
+
+	/** Get topic size by jmx no convert . */
+	public long topicCapacity(String clusterAlias, String topic);
 
 	/** Change topic config property. */
-	public String changeTopicConfig(String clusterAlias, String topic,String type, ConfigEntry configEntry);
+	public String changeTopicConfig(String clusterAlias, String topic, String type, ConfigEntry configEntry);
 
 }

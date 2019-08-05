@@ -34,6 +34,7 @@ import org.smartloli.kafka.eagle.api.email.module.LagContentModule;
 import org.smartloli.kafka.eagle.api.im.IMFactory;
 import org.smartloli.kafka.eagle.api.im.IMProvider;
 import org.smartloli.kafka.eagle.common.protocol.AlertInfo;
+import org.smartloli.kafka.eagle.common.protocol.BrokersInfo;
 import org.smartloli.kafka.eagle.common.protocol.ClustersInfo;
 import org.smartloli.kafka.eagle.common.protocol.OffsetZkInfo;
 import org.smartloli.kafka.eagle.common.protocol.OffsetsLiteInfo;
@@ -73,7 +74,6 @@ public class AlertQuartz {
 			// Run cluster job
 			Cluster cluster = new Cluster();
 			cluster.cluster();
-
 		}
 	}
 
@@ -118,11 +118,6 @@ public class AlertQuartz {
 							} else {
 								logSize = kafkaService.getLogSize(clusterAlias, topic, partition);
 							}
-//							if (SystemConfigUtils.getBooleanProperty("kafka.eagle.sasl.enable")) {
-//								logSize = kafkaService.getKafkaLogSize(clusterAlias, topic, partition);
-//							} else {
-//								logSize = kafkaService.getLogSize(hosts, topic, partition);
-//							}
 							OffsetZkInfo offsetZk = null;
 							if ("kafka".equals(formatter)) {
 								String bootstrapServers = "";
@@ -149,9 +144,6 @@ public class AlertQuartz {
 						offsetLites.add(offsetSQLite);
 					}
 				}
-
-				// Monitor consumer topic rate min/per
-				// zkService.insert(clusterAlias, offsetLites);
 
 				alert(clusterAlias, offsetLites);
 			} catch (Exception ex) {
@@ -215,14 +207,10 @@ public class AlertQuartz {
 
 		/** Get kafka brokers. */
 		private List<String> getBrokers(String clusterAlias) {
-			String brokers = kafkaService.getAllBrokersInfo(clusterAlias);
-			JSONArray kafkaBrokers = JSON.parseArray(brokers);
+			List<BrokersInfo> brokers = kafkaService.getAllBrokersInfo(clusterAlias);
 			List<String> targets = new ArrayList<String>();
-			for (Object object : kafkaBrokers) {
-				JSONObject kafkaBroker = (JSONObject) object;
-				String host = kafkaBroker.getString("host");
-				int port = kafkaBroker.getInteger("port");
-				targets.add(host + ":" + port);
+			for (BrokersInfo broker : brokers) {
+				targets.add(broker.getHost() + ":" + broker.getPort());
 			}
 			return targets;
 		}

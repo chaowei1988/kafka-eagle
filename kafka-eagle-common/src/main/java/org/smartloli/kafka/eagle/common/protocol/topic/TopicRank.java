@@ -17,23 +17,21 @@
  */
 package org.smartloli.kafka.eagle.common.protocol.topic;
 
-import com.google.gson.Gson;
+import org.smartloli.kafka.eagle.common.protocol.BaseProtocol;
 
 /**
- * Topic lag information.
+ * Rank topic records logsize & capacity size.
  * 
  * @author smartloli.
  *
- *         Created by Jan 16, 2019
+ *         Created by Jul 27, 2019
  */
-public class TopicLagInfo {
+public class TopicRank extends BaseProtocol {
 
-	private String cluster;
-	private String group;
-	private String topic;
-	private String lag;
-	private long timespan;
-	private String tm;
+	private String cluster = "";
+	private String topic = "";
+	private String tkey = "";
+	private long tvalue = 0L;
 
 	public String getCluster() {
 		return cluster;
@@ -41,14 +39,6 @@ public class TopicLagInfo {
 
 	public void setCluster(String cluster) {
 		this.cluster = cluster;
-	}
-
-	public String getGroup() {
-		return group;
-	}
-
-	public void setGroup(String group) {
-		this.group = group;
 	}
 
 	public String getTopic() {
@@ -59,33 +49,20 @@ public class TopicLagInfo {
 		this.topic = topic;
 	}
 
-	public String getLag() {
-		return lag;
+	public String getTkey() {
+		return tkey;
 	}
 
-	public void setLag(String lag) {
-		this.lag = lag;
+	public void setTkey(String tkey) {
+		this.tkey = tkey;
 	}
 
-	public long getTimespan() {
-		return timespan;
+	public long getTvalue() {
+		return tvalue;
 	}
 
-	public void setTimespan(long timespan) {
-		this.timespan = timespan;
-	}
-
-	public String getTm() {
-		return tm;
-	}
-
-	public void setTm(String tm) {
-		this.tm = tm;
-	}
-
-	@Override
-	public String toString() {
-		return new Gson().toJson(this);
+	public void setTvalue(long tvalue) {
+		this.tvalue = tvalue;
 	}
 
 }
